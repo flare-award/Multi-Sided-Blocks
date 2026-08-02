@@ -41,13 +41,13 @@ world via BlockEntity/NBT.
 - Каждая грань хранит полный `BlockState` источника (не только id текстуры), поэтому
   свойства блока (например, тип плиты) тоже сохраняются.
 - NBT: `faces.<direction>` внутри BlockEntity (`north`, `south`, `east`, `west`, `up`, `down`).
-- Рендер: блок в мире отрисовывается `BlockEntityRenderer` — данные граней читаются
-  из BlockEntity каждый кадр, поэтому изменение грани видно мгновенно и не требует
-  пересборки чанка. Текстура грани извлекается из доминантного квада модели исходного
-  блока на этой грани; для не-кубических блоков используется particle-спрайт.
-  Тонировка (tint) разрешается по цветовому провайдеру исходного блока.
-  Предметы с сохранёнными гранями рендерятся через Fabric Renderer API
-  (`FabricBakedModel`), когда он доступен (Indigo/Indium).
+- Рендер: блок рисуется обычным чанковым пайплайном с ванильным освещением, AO и
+  отсечением скрытых граней. `FabricBakedModel` получает потокобезопасный снимок граней
+  из BlockEntity через Fabric Block View API. При изменении грани свойство `version`
+  блока переключается, чтобы клиент гарантированно пересобрал меш чанка. Текстура грани
+  извлекается из доминантного квада модели исходного блока; для не-кубических блоков
+  используется particle-спрайт. Тонировка разрешается по цветовому провайдеру блока.
+  Предметы с сохранёнными гранями также рендерятся через Fabric Renderer API.
 - Совместимость с WorldEdit / Axiom: данные живут в NBT BlockEntity, поэтому
   копирование/вставка и схемы сохраняют грани.
 - Ресурс-паки работают как обычно: грани показывают актуальные спрайты из атласа
@@ -56,12 +56,13 @@ world via BlockEntity/NBT.
 - Each face stores the full `BlockState` of the source (not just a texture id), so block
   properties (e.g. slab type) are preserved too.
 - NBT: `faces.<direction>` in the BlockEntity (`north`, `south`, `east`, `west`, `up`, `down`).
-- Rendering: the block in the world is drawn by a `BlockEntityRenderer` that reads the
-  face data from the block entity every frame, so face changes show up instantly without
-  a chunk rebuild. A face texture is taken from the dominant quad of the source block's
-  model on that face; non-cube blocks fall back to their particle sprite. Tints are
-  resolved through the source block's color provider. Items carrying saved faces render
-  through the Fabric Renderer API (`FabricBakedModel`) when available (Indigo/Indium).
+- Rendering uses the normal chunk pipeline with vanilla lighting, ambient occlusion and
+  face culling. `FabricBakedModel` reads a thread-safe face snapshot through Fabric Block
+  View API. Changing a face advances the block's `version` property so the client always
+  rebuilds the chunk mesh. A face texture is taken from the dominant quad of the source
+  block's model; non-cube blocks fall back to their particle sprite. Tints are resolved
+  through the source block's color provider. Items carrying saved faces also render
+  through Fabric Renderer API.
 - WorldEdit / Axiom friendly: data lives in BlockEntity NBT, so copies, pastes and
   schematics keep the faces.
 - Resource packs work as usual: faces show the current atlas sprites and refresh on
@@ -69,15 +70,13 @@ world via BlockEntity/NBT.
 
 ## Совместимость рендера / Renderer compatibility
 
-- Блок в мире рисуется `BlockEntityRenderer`, поэтому работает с любым рендерером —
-  ванильным, Indigo, **Sodium** (без Indium) и Iris.
-- Предметы с сохранёнными гранями показывают текстуры граней через Fabric Renderer
-  API (Indigo/Indium); без него предмет выглядит как базовый куб.
+- Динамические грани используют Fabric Renderer API. Для **Sodium 0.5 нужен Indium**.
+- Без Indium блок и предмет остаются корректно освещёнными базовыми кубами, но назначенные
+  текстуры граней не отображаются.
 
-- The block in the world is drawn by a `BlockEntityRenderer`, so it works with any
-  renderer — vanilla, Indigo, **Sodium** (no Indium needed) and Iris.
-- Items carrying saved faces show the face textures via the Fabric Renderer API
-  (Indigo/Indium); without it the item looks like the default cube.
+- Dynamic faces use Fabric Renderer API. **Sodium 0.5 requires Indium**.
+- Without Indium, the block and item remain correctly lit default cubes, but assigned face
+  textures are not displayed.
 
 ## Сборка / Building
 

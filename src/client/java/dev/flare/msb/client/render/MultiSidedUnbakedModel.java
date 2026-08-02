@@ -1,5 +1,6 @@
 package dev.flare.msb.client.render;
 
+import com.mojang.datafixers.util.Pair;
 import dev.flare.msb.MultiSidedBlocks;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -12,6 +13,7 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -21,10 +23,19 @@ import java.util.function.Function;
 public class MultiSidedUnbakedModel implements UnbakedModel {
 
 	private static final ResourceLocation BASE_TEXTURE = MultiSidedBlocks.id("block/multi_sided_base");
+	private static final Material BASE_MATERIAL = new Material(TextureAtlas.LOCATION_BLOCKS, BASE_TEXTURE);
 
 	@Override
 	public Collection<ResourceLocation> getDependencies() {
 		return List.of();
+	}
+
+	@Override
+	public Collection<Material> getMaterials(Function<ResourceLocation, UnbakedModel> modelGetter,
+			Set<Pair<String, String>> missingTextureErrors) {
+		// Dynamic models have no dependencies for the default implementation to inspect.
+		// Declaring this explicitly ensures the base sprite is stitched into the atlas.
+		return List.of(BASE_MATERIAL);
 	}
 
 	@Override
@@ -33,7 +44,7 @@ public class MultiSidedUnbakedModel implements UnbakedModel {
 
 	@Override
 	public BakedModel bake(ModelBaker modelBaker, Function<Material, TextureAtlasSprite> spriteGetter, ModelState transform, ResourceLocation location) {
-		TextureAtlasSprite baseSprite = spriteGetter.apply(new Material(TextureAtlas.LOCATION_BLOCKS, BASE_TEXTURE));
+		TextureAtlasSprite baseSprite = spriteGetter.apply(BASE_MATERIAL);
 		return new MultiSidedBakedModel(baseSprite);
 	}
 }

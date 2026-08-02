@@ -1,0 +1,6 @@
+{
+  "parent": "minecraft:block/cube_all",
+  "textures": {
+    "all": "multi-sided-blocks:block/multi_sided_base"
+  }
+}

@@ -2,6 +2,7 @@ package dev.flare.msb.client.render;
 
 import org.joml.Vector3f;
 import dev.flare.msb.block.MultiSidedBlockEntity;
+import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -14,9 +15,11 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,12 +30,11 @@ import java.util.function.Supplier;
 /**
  * The baked model of a Multi-Sided Block.
  *
- * <p>World rendering is <em>not</em> done through this model: the block reports
- * {@code RenderShape.ENTITYBLOCK_ANIMATED} and is drawn every frame by
- * {@link MultiSidedBlockEntityRenderer}, which reads the per-face data straight from the
- * block entity (works with vanilla, Indigo, Sodium and Iris, and updates instantly).
- * This model is used for items (saved faces via the Fabric renderer API when available,
- * the default texture cube otherwise) and for particles.
+ * <p>World blocks render through the normal chunk pipeline. During a chunk rebuild the
+ * model reads an immutable face snapshot from {@code FabricBlockView}, resolves the six
+ * source textures and emits a cullable cube. The vanilla {@link #getQuads} path remains a
+ * correctly lit base-texture fallback for renderers that do not invoke Fabric Renderer API.
+ * Items use the same dynamic face generation when renderer integration is available.
  */
 public class MultiSidedBakedModel implements BakedModel, FabricBakedModel {
 
@@ -86,6 +88,17 @@ public class MultiSidedBakedModel implements BakedModel, FabricBakedModel {
 	@Override
 	public boolean isVanillaAdapter() {
 		return false;
+	}
+
+	@Override
+	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos,
+			Supplier<RandomSource> randomSupplier, RenderContext context) {
+		Map<Direction, MultiSidedRenderData.FaceRenderData> resolved = null;
+		Object renderData = ((FabricBlockView) blockView).getBlockEntityRenderData(pos);
+		if (renderData instanceof MultiSidedBlockEntity.FaceSnapshot snapshot && !snapshot.faces().isEmpty()) {
+			resolved = MultiSidedRenderData.resolve(blockView, pos, snapshot.faces());
+		}
+		emitFaces(context, resolved);
 	}
 
 	@Override
