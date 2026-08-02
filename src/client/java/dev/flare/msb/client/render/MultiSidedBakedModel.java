@@ -122,7 +122,16 @@ public class MultiSidedBakedModel implements BakedModel, FabricBakedModel {
 			if (face == null) {
 				emitFace(emitter, direction, this.baseSprite, -1);
 			} else {
-				TextureAtlasSprite sprite = blockAtlas().getSprite(face.spriteId());
+				// The stored sprite id may not be present in the current blocks atlas
+				// (e.g. a modded sprite from another atlas, or a stale id right after a
+				// resource reload). Never let that break chunk building; fall back to the
+				// default texture instead.
+				TextureAtlasSprite sprite;
+				try {
+					sprite = blockAtlas().getSprite(face.spriteId());
+				} catch (RuntimeException exception) {
+					sprite = this.baseSprite;
+				}
 				emitFace(emitter, direction, sprite, face.tintColor());
 			}
 		}
