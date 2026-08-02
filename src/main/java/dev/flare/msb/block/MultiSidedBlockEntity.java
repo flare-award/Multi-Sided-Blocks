@@ -9,6 +9,7 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtUtils;
 import net.minecraft.nbt.Tag;
+import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -117,6 +118,18 @@ public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBloc
 			this.faces.clear();
 			this.faces.putAll(readFaces(tag));
 		}
+	}
+
+	@Override
+	public ClientboundBlockEntityDataPacket getUpdatePacket() {
+		return ClientboundBlockEntityDataPacket.create(this);
+	}
+
+	@Override
+	public CompoundTag getUpdateTag() {
+		// BlockEntity's vanilla implementation returns an empty tag. The explicit update
+		// packet sent after an interaction therefore needs this override to carry faces.
+		return this.saveWithoutMetadata();
 	}
 
 	@Override
