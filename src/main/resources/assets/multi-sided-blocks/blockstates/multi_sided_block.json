@@ -1,0 +1,7 @@
+{
+  "variants": {
+    "": {
+      "model": "multi-sided-blocks:block/multi_sided"
+    }
+  }
+}

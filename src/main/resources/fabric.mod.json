@@ -2,35 +2,28 @@
 	"schemaVersion": 1,
 	"id": "multi-sided-blocks",
 	"version": "${version}",
-	"name": "Multi-Sided-Blocks",
-	"description": "This is an example description! Tell everyone what your mod is about!",
+	"name": "Multi-Sided Blocks",
+	"description": "One block, six faces: assign a different block texture to every side of a single block. Perfect for realistic buildings where the outside is sandstone and the inside is wallpaper — with one block, no double walls.",
 	"authors": [
-		"Me!"
+		"flare-award"
 	],
 	"contact": {
-		"homepage": "https://fabricmc.net/",
-		"sources": "https://github.com/FabricMC/fabric-example-mod"
+		"homepage": "https://github.com/flare-award/Multi-Sided-Blocks",
+		"sources": "https://github.com/flare-award/Multi-Sided-Blocks"
 	},
 	"license": "CC0-1.0",
 	"icon": "assets/multi-sided-blocks/icon.png",
 	"environment": "*",
 	"entrypoints": {
 		"main": [
-			"name.modid.MultiSidedBlocks"
+			"dev.flare.msb.MultiSidedBlocks"
 		],
 		"client": [
-			"name.modid.client.MultiSidedBlocksClient"
+			"dev.flare.msb.client.MultiSidedBlocksClient"
 		]
 	},
-	"mixins": [
-		"multi-sided-blocks.mixins.json",
-		{
-			"config": "multi-sided-blocks.client.mixins.json",
-			"environment": "client"
-		}
-	],
 	"depends": {
-		"fabricloader": ">=0.19.3",
+		"fabricloader": ">=0.16.0",
 		"minecraft": "~1.20.1",
 		"java": ">=17",
 		"fabric-api": "*"
