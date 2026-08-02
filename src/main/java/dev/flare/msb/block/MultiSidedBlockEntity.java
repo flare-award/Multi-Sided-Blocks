@@ -1,6 +1,7 @@
 package dev.flare.msb.block;
 
 import dev.flare.msb.MultiSidedBlocks;
+import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
@@ -24,18 +25,12 @@ import java.util.Map;
  * of the source block (slab type, waterlogging, facing, ...) are preserved too.
  * Data is persisted in NBT under the "faces" compound, keyed by direction name.
  */
-public class MultiSidedBlockEntity extends BlockEntity {
+public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBlockEntity {
 
 	public static final String FACES_TAG = "faces";
 
 	/** The faces map is guarded by its own monitor so render threads can snapshot it safely. */
 	private final Map<Direction, BlockState> faces = new EnumMap<>(Direction.class);
-
-	/**
-	 * Incremented whenever the in-memory face data changes (including loading from NBT),
-	 * so the client-side renderer can invalidate its per-entity resolution cache.
-	 */
-	private long facesVersion = 0L;
 
 	public MultiSidedBlockEntity(BlockPos pos, BlockState state) {
 		super(MultiSidedBlocks.MULTI_SIDED_BLOCK_ENTITY, pos, state);
@@ -54,20 +49,24 @@ public class MultiSidedBlockEntity extends BlockEntity {
 		}
 	}
 
-	/**
-	 * Returns the current faces version. The client renderer uses it to know when its
-	 * cached per-face resolution is stale (see {@code MultiSidedBlockEntityRenderer}).
-	 */
-	public long getFacesVersion() {
-		synchronized (this.faces) {
-			return this.facesVersion;
-		}
-	}
-
 	/** Immutable copy of the currently assigned face states. */
 	public Map<Direction, BlockState> facesSnapshot() {
 		synchronized (this.faces) {
 			return Collections.unmodifiableMap(new EnumMap<>(this.faces));
+		}
+	}
+
+	@Override
+	public FaceSnapshot getRenderData() {
+		return new FaceSnapshot(this.facesSnapshot());
+	}
+
+	/** Thread-safe, immutable data consumed by asynchronous chunk builders. */
+	public record FaceSnapshot(Map<Direction, BlockState> faces) {
+		public FaceSnapshot {
+			EnumMap<Direction, BlockState> copy = new EnumMap<>(Direction.class);
+			copy.putAll(faces);
+			faces = Collections.unmodifiableMap(copy);
 		}
 	}
 
@@ -81,7 +80,6 @@ public class MultiSidedBlockEntity extends BlockEntity {
 			} else {
 				this.faces.put(direction, state);
 			}
-			this.facesVersion++;
 		}
 		this.setChanged();
 	}
@@ -118,7 +116,6 @@ public class MultiSidedBlockEntity extends BlockEntity {
 		synchronized (this.faces) {
 			this.faces.clear();
 			this.faces.putAll(readFaces(tag));
-			this.facesVersion++;
 		}
 	}
 

@@ -18,11 +18,12 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
-import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.IntegerProperty;
 import net.minecraft.world.level.storage.loot.LootParams;
 import net.minecraft.world.level.storage.loot.parameters.LootContextParams;
 import net.minecraft.world.phys.BlockHitResult;
@@ -42,28 +43,28 @@ import java.util.Map;
 @SuppressWarnings("deprecation") // Block.use / getDrops are deprecated in 1.20.1 vanilla but remain the standard override points
 public class MultiSidedBlock extends Block implements EntityBlock {
 
+	/**
+	 * A render-only revision counter. Changing this property forces the client to rebuild
+	 * the chunk mesh after block entity face data arrives.
+	 */
+	public static final IntegerProperty VERSION = IntegerProperty.create("version", 0, 15);
+
 	public MultiSidedBlock() {
 		super(BlockBehaviour.Properties.of()
 				.strength(1.5F, 6.0F)
 				.sound(SoundType.STONE));
+		this.registerDefaultState(this.stateDefinition.any().setValue(VERSION, 0));
+	}
+
+	@Override
+	protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
+		builder.add(VERSION);
 	}
 
 	@Nullable
 	@Override
 	public BlockEntity newBlockEntity(BlockPos pos, BlockState state) {
 		return new MultiSidedBlockEntity(pos, state);
-	}
-
-	/**
-	 * The faces are drawn by {@code MultiSidedBlockEntityRenderer}, which reads the block
-	 * entity every frame. Telling the renderer the shape is "animated" makes the vanilla
-	 * chunk builder (and Sodium) skip this block in the chunk mesh — exactly like chests
-	 * and signs — so face changes appear instantly without a chunk re-render, under any
-	 * renderer (vanilla, Indigo, Sodium, Iris).
-	 */
-	@Override
-	public RenderShape getRenderShape(BlockState state) {
-		return RenderShape.ENTITYBLOCK_ANIMATED;
 	}
 
 	@Override
@@ -95,15 +96,20 @@ public class MultiSidedBlock extends Block implements EntityBlock {
 	}
 
 	/**
-	 * Sends the updated face data to every player. The client's block entity renderer
-	 * reads the data directly every frame, so no chunk re-render is needed for the change
-	 * to show up.
+	 * Sends fresh block entity data, then changes the real block state so clients rebuild
+	 * the chunk mesh. A same-state block update is ignored by the 1.20.1 client, hence the
+	 * small wrapping version property.
 	 */
 	private static void syncToClients(Level level, BlockPos pos, MultiSidedBlockEntity blockEntity) {
 		if (level instanceof ServerLevel serverLevel) {
 			ClientboundBlockEntityDataPacket packet = ClientboundBlockEntityDataPacket.create(blockEntity);
 			for (ServerPlayer serverPlayer : serverLevel.players()) {
 				serverPlayer.connection.send(packet);
+			}
+
+			BlockState current = level.getBlockState(pos);
+			if (current.hasProperty(VERSION)) {
+				level.setBlock(pos, current.setValue(VERSION, (current.getValue(VERSION) + 1) & 15), 3);
 			}
 		}
 	}
