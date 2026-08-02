@@ -18,6 +18,7 @@ import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.EntityBlock;
+import net.minecraft.world.level.block.RenderShape;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockBehaviour;
@@ -53,6 +54,18 @@ public class MultiSidedBlock extends Block implements EntityBlock {
 		return new MultiSidedBlockEntity(pos, state);
 	}
 
+	/**
+	 * The faces are drawn by {@code MultiSidedBlockEntityRenderer}, which reads the block
+	 * entity every frame. Telling the renderer the shape is "animated" makes the vanilla
+	 * chunk builder (and Sodium) skip this block in the chunk mesh — exactly like chests
+	 * and signs — so face changes appear instantly without a chunk re-render, under any
+	 * renderer (vanilla, Indigo, Sodium, Iris).
+	 */
+	@Override
+	public RenderShape getRenderShape(BlockState state) {
+		return RenderShape.ENTITYBLOCK_ANIMATED;
+	}
+
 	@Override
 	public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand hand, BlockHitResult hit) {
 		if (!(level.getBlockEntity(pos) instanceof MultiSidedBlockEntity blockEntity)) {
@@ -82,8 +95,9 @@ public class MultiSidedBlock extends Block implements EntityBlock {
 	}
 
 	/**
-	 * Sends the block entity data to every player first, then triggers a chunk re-render,
-	 * so clients never render stale faces.
+	 * Sends the updated face data to every player. The client's block entity renderer
+	 * reads the data directly every frame, so no chunk re-render is needed for the change
+	 * to show up.
 	 */
 	private static void syncToClients(Level level, BlockPos pos, MultiSidedBlockEntity blockEntity) {
 		if (level instanceof ServerLevel serverLevel) {
@@ -91,7 +105,6 @@ public class MultiSidedBlock extends Block implements EntityBlock {
 			for (ServerPlayer serverPlayer : serverLevel.players()) {
 				serverPlayer.connection.send(packet);
 			}
-			serverLevel.sendBlockUpdated(pos, blockEntity.getBlockState(), blockEntity.getBlockState(), 3);
 		}
 	}
 

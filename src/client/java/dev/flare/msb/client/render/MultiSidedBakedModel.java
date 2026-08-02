@@ -2,7 +2,6 @@ package dev.flare.msb.client.render;
 
 import org.joml.Vector3f;
 import dev.flare.msb.block.MultiSidedBlockEntity;
-import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
 import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
@@ -15,11 +14,9 @@ import net.minecraft.client.renderer.block.model.ItemTransforms;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.model.BakedModel;
-import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.util.RandomSource;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.block.state.BlockState;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,13 +25,14 @@ import java.util.Map;
 import java.util.function.Supplier;
 
 /**
- * Renders a Multi-Sided Block: a full cube whose six faces each show the texture of the
- * block assigned to that face (stored per block entity).
+ * The baked model of a Multi-Sided Block.
  *
- * <p>Chunk building goes through {@link #emitBlockQuads} (Fabric renderer API, used by the
- * default Indigo renderer and by Sodium), which has access to the block view and position
- * and therefore to the per-block face data. {@link #getQuads} is the vanilla fallback used
- * when no renderer integration is available; it renders the default texture cube.
+ * <p>World rendering is <em>not</em> done through this model: the block reports
+ * {@code RenderShape.ENTITYBLOCK_ANIMATED} and is drawn every frame by
+ * {@link MultiSidedBlockEntityRenderer}, which reads the per-face data straight from the
+ * block entity (works with vanilla, Indigo, Sodium and Iris, and updates instantly).
+ * This model is used for items (saved faces via the Fabric renderer API when available,
+ * the default texture cube otherwise) and for particles.
  */
 public class MultiSidedBakedModel implements BakedModel, FabricBakedModel {
 
@@ -82,27 +80,12 @@ public class MultiSidedBakedModel implements BakedModel, FabricBakedModel {
 	}
 
 	// -----------------------------------------------------------------------------------
-	// Fabric renderer API (used for chunk building and item rendering by Indigo/Sodium)
+	// Fabric renderer API (used for item rendering by Indigo/Sodium+Indium)
 	// -----------------------------------------------------------------------------------
 
 	@Override
 	public boolean isVanillaAdapter() {
 		return false;
-	}
-
-	@Override
-	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos,
-			Supplier<RandomSource> randomSupplier, RenderContext context) {
-		MultiSidedBlockEntity.FaceSnapshot snapshot = null;
-		if (blockView instanceof FabricBlockView) {
-			Object data = ((FabricBlockView) blockView).getBlockEntityRenderData(pos);
-			if (data instanceof MultiSidedBlockEntity.FaceSnapshot faceSnapshot) {
-				snapshot = faceSnapshot;
-			}
-		}
-		Map<Direction, MultiSidedRenderData.FaceRenderData> resolved =
-				snapshot == null ? null : MultiSidedRenderData.resolve(blockView, pos, snapshot.faces());
-		emitFaces(context, resolved);
 	}
 
 	@Override
@@ -124,7 +107,7 @@ public class MultiSidedBakedModel implements BakedModel, FabricBakedModel {
 			} else {
 				// The stored sprite id may not be present in the current blocks atlas
 				// (e.g. a modded sprite from another atlas, or a stale id right after a
-				// resource reload). Never let that break chunk building; fall back to the
+				// resource reload). Never let that break item rendering; fall back to the
 				// default texture instead.
 				TextureAtlasSprite sprite;
 				try {

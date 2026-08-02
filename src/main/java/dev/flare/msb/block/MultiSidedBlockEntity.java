@@ -1,7 +1,6 @@
 package dev.flare.msb.block;
 
 import dev.flare.msb.MultiSidedBlocks;
-import net.fabricmc.fabric.api.blockview.v2.RenderDataBlockEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
@@ -25,28 +24,18 @@ import java.util.Map;
  * of the source block (slab type, waterlogging, facing, ...) are preserved too.
  * Data is persisted in NBT under the "faces" compound, keyed by direction name.
  */
-public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBlockEntity {
+public class MultiSidedBlockEntity extends BlockEntity {
 
 	public static final String FACES_TAG = "faces";
 
-	/** Immutable snapshot of the face states, safe to share with render threads. */
-	public record FaceSnapshot(Map<Direction, BlockState> faces) {
-		public static FaceSnapshot of(Map<Direction, BlockState> faces) {
-			return new FaceSnapshot(Collections.unmodifiableMap(new EnumMap<>(faces)));
-		}
-
-		@Nullable
-		public BlockState get(Direction direction) {
-			return this.faces.get(direction);
-		}
-
-		public boolean isEmpty() {
-			return this.faces.isEmpty();
-		}
-	}
-
 	/** The faces map is guarded by its own monitor so render threads can snapshot it safely. */
 	private final Map<Direction, BlockState> faces = new EnumMap<>(Direction.class);
+
+	/**
+	 * Incremented whenever the in-memory face data changes (including loading from NBT),
+	 * so the client-side renderer can invalidate its per-entity resolution cache.
+	 */
+	private long facesVersion = 0L;
 
 	public MultiSidedBlockEntity(BlockPos pos, BlockState state) {
 		super(MultiSidedBlocks.MULTI_SIDED_BLOCK_ENTITY, pos, state);
@@ -65,9 +54,20 @@ public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBloc
 		}
 	}
 
-	public FaceSnapshot snapshot() {
+	/**
+	 * Returns the current faces version. The client renderer uses it to know when its
+	 * cached per-face resolution is stale (see {@code MultiSidedBlockEntityRenderer}).
+	 */
+	public long getFacesVersion() {
 		synchronized (this.faces) {
-			return FaceSnapshot.of(this.faces);
+			return this.facesVersion;
+		}
+	}
+
+	/** Immutable copy of the currently assigned face states. */
+	public Map<Direction, BlockState> facesSnapshot() {
+		synchronized (this.faces) {
+			return Collections.unmodifiableMap(new EnumMap<>(this.faces));
 		}
 	}
 
@@ -81,6 +81,7 @@ public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBloc
 			} else {
 				this.faces.put(direction, state);
 			}
+			this.facesVersion++;
 		}
 		this.setChanged();
 	}
@@ -117,6 +118,7 @@ public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBloc
 		synchronized (this.faces) {
 			this.faces.clear();
 			this.faces.putAll(readFaces(tag));
+			this.facesVersion++;
 		}
 	}
 
@@ -131,18 +133,6 @@ public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBloc
 		}
 		if (!facesTag.isEmpty()) {
 			tag.put(FACES_TAG, facesTag);
-		}
-	}
-
-	/**
-	 * Thread-safe render data: an immutable snapshot of the face states. Called by the
-	 * block view API on chunk-building threads; never touches any client-only code.
-	 */
-	@Nullable
-	@Override
-	public Object getRenderData() {
-		synchronized (this.faces) {
-			return this.faces.isEmpty() ? null : FaceSnapshot.of(this.faces);
 		}
 	}
 }
