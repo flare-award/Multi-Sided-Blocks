@@ -1,0 +1,13 @@
+{
+  "block.multi-sided-blocks.multi_sided_block": "Многосторонний блок",
+  "multi-sided-blocks.tooltip.hint": "ПКМ по каждой грани с блоком в руке — назначить текстуру",
+  "multi-sided-blocks.tooltip.clear": "Shift + ПКМ пустой рукой — очистить грань",
+  "multi-sided-blocks.tooltip.faces": "Грани:",
+  "multi-sided-blocks.tooltip.north": "Север",
+  "multi-sided-blocks.tooltip.south": "Юг",
+  "multi-sided-blocks.tooltip.east": "Восток",
+  "multi-sided-blocks.tooltip.west": "Запад",
+  "multi-sided-blocks.tooltip.up": "Верх",
+  "multi-sided-blocks.tooltip.down": "Низ",
+  "multi-sided-blocks.tooltip.face": "  %1$s: %2$s"
+}

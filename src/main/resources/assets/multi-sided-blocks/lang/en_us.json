@@ -1,0 +1,13 @@
+{
+  "block.multi-sided-blocks.multi_sided_block": "Multi-Sided Block",
+  "multi-sided-blocks.tooltip.hint": "Right-click each face with a block to assign its texture",
+  "multi-sided-blocks.tooltip.clear": "Sneak + right-click with an empty hand to clear a face",
+  "multi-sided-blocks.tooltip.faces": "Faces:",
+  "multi-sided-blocks.tooltip.north": "North",
+  "multi-sided-blocks.tooltip.south": "South",
+  "multi-sided-blocks.tooltip.east": "East",
+  "multi-sided-blocks.tooltip.west": "West",
+  "multi-sided-blocks.tooltip.up": "Top",
+  "multi-sided-blocks.tooltip.down": "Bottom",
+  "multi-sided-blocks.tooltip.face": "  %1$s: %2$s"
+}
