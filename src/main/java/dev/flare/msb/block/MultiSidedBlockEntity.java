@@ -7,8 +7,8 @@ import net.minecraft.core.Direction;
 import net.minecraft.core.HolderGetter;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtType;
 import net.minecraft.nbt.NbtUtils;
+import net.minecraft.nbt.Tag;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
@@ -101,7 +101,7 @@ public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBloc
 		HolderGetter<Block> blockGetter = BuiltInRegistries.BLOCK.asLookup();
 		for (Direction direction : Direction.values()) {
 			String key = direction.getSerializedName();
-			if (facesTag.contains(key, NbtType.TAG_COMPOUND)) {
+			if (facesTag.contains(key, Tag.TAG_COMPOUND)) {
 				BlockState state = NbtUtils.readBlockState(blockGetter, facesTag.getCompound(key));
 				if (state != null && !state.isAir()) {
 					result.put(direction, state);
@@ -112,8 +112,8 @@ public class MultiSidedBlockEntity extends BlockEntity implements RenderDataBloc
 	}
 
 	@Override
-	public void loadAdditional(CompoundTag tag) {
-		super.loadAdditional(tag);
+	public void load(CompoundTag tag) {
+		super.load(tag);
 		synchronized (this.faces) {
 			this.faces.clear();
 			this.faces.putAll(readFaces(tag));

@@ -38,6 +38,7 @@ import java.util.Map;
  * texture. Face data is stored per-face in the {@link MultiSidedBlockEntity} and persists
  * in the world; broken blocks keep their faces via the item's BlockEntityTag.
  */
+@SuppressWarnings("deprecation") // Block.use / getDrops are deprecated in 1.20.1 vanilla but remain the standard override points
 public class MultiSidedBlock extends Block implements EntityBlock {
 
 	public MultiSidedBlock() {
