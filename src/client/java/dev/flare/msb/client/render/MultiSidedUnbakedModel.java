@@ -12,7 +12,6 @@ import net.minecraft.resources.ResourceLocation;
 
 import java.util.Collection;
 import java.util.List;
-import java.util.Set;
 import java.util.function.Function;
 
 /**
@@ -27,13 +26,6 @@ public class MultiSidedUnbakedModel implements UnbakedModel {
 	@Override
 	public Collection<ResourceLocation> getDependencies() {
 		return List.of();
-	}
-
-	@Override
-	public void getMaterials(Function<ResourceLocation, UnbakedModel> modelGetter, Set<Material> materials) {
-		// Dynamic models have no dependencies for the default implementation to inspect.
-		// Declaring this explicitly ensures the base sprite is stitched into the atlas.
-		materials.add(BASE_MATERIAL);
 	}
 
 	@Override
