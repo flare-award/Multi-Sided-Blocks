@@ -1,6 +1,5 @@
 package dev.flare.msb.client.render;
 
-import com.mojang.datafixers.util.Pair;
 import dev.flare.msb.MultiSidedBlocks;
 import net.minecraft.client.renderer.texture.TextureAtlas;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
@@ -31,11 +30,10 @@ public class MultiSidedUnbakedModel implements UnbakedModel {
 	}
 
 	@Override
-	public Collection<Material> getMaterials(Function<ResourceLocation, UnbakedModel> modelGetter,
-			Set<Pair<String, String>> missingTextureErrors) {
+	public void getMaterials(Function<ResourceLocation, UnbakedModel> modelGetter, Set<Material> materials) {
 		// Dynamic models have no dependencies for the default implementation to inspect.
 		// Declaring this explicitly ensures the base sprite is stitched into the atlas.
-		return List.of(BASE_MATERIAL);
+		materials.add(BASE_MATERIAL);
 	}
 
 	@Override
