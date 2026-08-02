@@ -1,9 +1,9 @@
 package dev.flare.msb.client.render;
 
-import com.mojang.math.Vector3f;
+import org.joml.Vector3f;
 import dev.flare.msb.block.MultiSidedBlockEntity;
 import net.fabricmc.fabric.api.blockview.v2.FabricBlockView;
-import net.fabricmc.fabric.api.renderer.v1.RenderContext;
+import net.fabricmc.fabric.api.renderer.v1.render.RenderContext;
 import net.fabricmc.fabric.api.renderer.v1.mesh.MutableQuadView;
 import net.fabricmc.fabric.api.renderer.v1.mesh.QuadEmitter;
 import net.fabricmc.fabric.api.renderer.v1.model.FabricBakedModel;
@@ -94,8 +94,8 @@ public class MultiSidedBakedModel implements BakedModel, FabricBakedModel {
 	public void emitBlockQuads(BlockAndTintGetter blockView, BlockState state, BlockPos pos,
 			Supplier<RandomSource> randomSupplier, RenderContext context) {
 		MultiSidedBlockEntity.FaceSnapshot snapshot = null;
-		if (blockView instanceof FabricBlockView fabricView) {
-			Object data = fabricView.getBlockEntityRenderData(pos);
+		if (blockView instanceof FabricBlockView) {
+			Object data = ((FabricBlockView) blockView).getBlockEntityRenderData(pos);
 			if (data instanceof MultiSidedBlockEntity.FaceSnapshot faceSnapshot) {
 				snapshot = faceSnapshot;
 			}
