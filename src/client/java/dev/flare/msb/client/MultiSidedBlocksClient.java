@@ -5,7 +5,7 @@ import dev.flare.msb.client.render.MultiSidedBlockEntityRenderer;
 import dev.flare.msb.client.render.MultiSidedUnbakedModel;
 import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin;
-import net.minecraft.client.renderer.blockentity.BlockEntityRendererFactories;
+import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.minecraft.resources.ResourceLocation;
 
 public class MultiSidedBlocksClient implements ClientModInitializer {
@@ -14,7 +14,9 @@ public class MultiSidedBlocksClient implements ClientModInitializer {
 	public void onInitializeClient() {
 		// The block in the world is drawn by its block entity renderer, which reads the
 		// per-face data every frame (works with vanilla, Sodium and Iris, no Indium needed).
-		BlockEntityRendererFactories.register(MultiSidedBlocks.MULTI_SIDED_BLOCK_ENTITY, MultiSidedBlockEntityRenderer::new);
+		// BlockEntityRenderers.register is private in vanilla 1.20.1; the Fabric Transitive
+		// Access Wideners (shipped inside fabric-api) widen it for us.
+		BlockEntityRenderers.register(MultiSidedBlocks.MULTI_SIDED_BLOCK_ENTITY, MultiSidedBlockEntityRenderer::new);
 
 		// The blockstate references "multi-sided-blocks:block/multi_sided" and the item
 		// references "multi-sided-blocks:item/multi_sided_block". Instead of shipping a
